@@ -64,7 +64,8 @@
                             <RowDefinition Height="2*"/>
                         </Grid.RowDefinitions>
                         <Label x:Name="labelChooseFirstDateTime" Content="Choose first date and time" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <Calendar x:Name="calendarFirstDateTime" Grid.Row="1"/>
+                        <Calendar x:Name="calendarFirstDateTime" Grid.Row="1" VerticalAlignment="Center"/>
+                        <local:TimePicker x:Name="timePickerFirstDateTime" Grid.Row="2" VerticalAlignment="Center"/>
                     </Grid>
                     <Grid x:Name="gridLastDateTime" ShowGridLines="True" Grid.Column="1">
                         <Grid.RowDefinitions>
@@ -73,7 +74,8 @@
                             <RowDefinition Height="2*"/>
                         </Grid.RowDefinitions>
                         <Label x:Name="labelChooseLastDateTime" Content="Choose first date and time" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <Calendar x:Name="calendarLastDateTime" Grid.Row="1"/>
+                        <Calendar x:Name="calendarLastDateTime" Grid.Row="1" VerticalAlignment="Center"/>
+                        <local:TimePicker x:Name="timePickerLastDateTime" Grid.Row="2" VerticalAlignment="Center"/>
                     </Grid>
                     <Button x:Name="buttonDateTimeFilterAccept" Content="Accept" Grid.Row="3" Margin="2,4,4,4"/>
                     <Button x:Name="buttonDateTimeFilterCancel" Content="Cancel" Grid.Row="2" Margin="4,4,2,4" Grid.RowSpan="1" Grid.Column="1"/>
