@@ -4,7 +4,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
@@ -17,6 +16,7 @@ namespace EvrotorgTestApplication.ViewModels
         private string openedFilePath;
         private bool isDataLoaded;
         private readonly string generalUrl = @"https://api.nbrb.by/exrates/rates";
+        private string errorMessage;
 
         private ObservableCollection<RateModel> changedRatesCollection;
         private ObservableCollection<RateModel> cachedCurrencies;
@@ -29,7 +29,8 @@ namespace EvrotorgTestApplication.ViewModels
         private RelayCommand saveDataToNewFile;
 
         private DateTime firstDateTime;
-        private DateTime lastDateTime;
+        private bool isDatePeriodicityDaily = true;
+        private int periodicity;
         private RelayCommand acceptDateTimeFilter;
         private RelayCommand clearDateTimeFilter;
 
@@ -38,13 +39,24 @@ namespace EvrotorgTestApplication.ViewModels
         private RelayCommand acceptDataChanges;
         private RelayCommand revertDataChanges;
 
-        
+
         public MainWindowViewModel()
         {
-            FirstDateTime = DateTime.Parse("01.01.1991");
-            LastDateTime = DateTime.Now;
-
+            FirstDateTime = DateTime.Now;
             IsDataLoaded = false;
+        }
+
+        public string ErrorMessage
+        {
+            get
+            {
+                return this.errorMessage;
+            }
+            set
+            {
+                this.errorMessage = value;
+                OnPropertyChanged("ErrorMessage");
+            }
         }
 
         public ObservableCollection<RateModel> VisibleRatesCollection
@@ -88,7 +100,7 @@ namespace EvrotorgTestApplication.ViewModels
                     this.ChangedAbbreviation = this.selectedCurrency.Cur_Abbreviation;
                     this.ChangedRate = this.selectedCurrency.Cur_OfficialRate;
                 }
-                
+
                 OnPropertyChanged("SelectedCurrency");
             }
         }
@@ -119,16 +131,17 @@ namespace EvrotorgTestApplication.ViewModels
             }
         }
 
-        public DateTime LastDateTime
+        public bool IsDatePeriodicityDaily
         {
             get
             {
-                return this.lastDateTime;
+                return this.isDatePeriodicityDaily;
             }
             set
             {
-                this.lastDateTime = value;
-                OnPropertyChanged("LastDateTime");
+                this.isDatePeriodicityDaily = value;
+                periodicity = value ? 0 : 1;
+                OnPropertyChanged("IsDatePeriodicityDaily");
             }
         }
 
@@ -166,12 +179,27 @@ namespace EvrotorgTestApplication.ViewModels
                     (loadDataFromSite = new RelayCommand(async obj =>
                     {
                         var httpClient = new HttpClient();
-                        var url = generalUrl + "?periodicity=0";
 
-                        cachedCurrencies = await httpClient.GetFromJsonAsync<ObservableCollection<RateModel>>(url);
-                        VisibleRatesCollection = cachedCurrencies;
+                        if (httpClient is null)
+                        {
+                            ErrorMessage = "Error: httpClient is null!";
+                            return;
+                        }
 
-                        IsDataLoaded = true;
+                        try
+                        {
+                            cachedCurrencies = await httpClient.GetFromJsonAsync<ObservableCollection<RateModel>>(createUrl());
+
+                            VisibleRatesCollection = cachedCurrencies;
+
+                            OpenedFilePath = null;
+                            IsDataLoaded = true;
+                            ErrorMessage = string.Empty;
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorMessage = $"Error: can't get data from url!\n{ex.Message}";
+                        }
                     }));
             }
         }
@@ -186,20 +214,28 @@ namespace EvrotorgTestApplication.ViewModels
                     {
                         var filePicker = new OpenFileDialog();
                         filePicker.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                        filePicker.ShowDialog();
 
-                        if (!filePicker.ShowDialog().HasValue)
+                        if (filePicker.FileName == string.Empty)
                             return;
 
                         OpenedFilePath = filePicker.FileName;
-                        using (StreamReader reader = new StreamReader(filePicker.FileName, true))
+
+                        try
                         {
+                            StreamReader reader = new StreamReader(filePicker.FileName, true);
                             var line = await reader.ReadLineAsync();
                             cachedCurrencies = JsonSerializer.Deserialize<ObservableCollection<RateModel>>(line);
+
+                            VisibleRatesCollection = cachedCurrencies;
+
+                            IsDataLoaded = true;
+                            ErrorMessage = string.Empty;
                         }
-
-                        VisibleRatesCollection = cachedCurrencies;
-
-                        IsDataLoaded = true;
+                        catch (Exception ex)
+                        {
+                            ErrorMessage = $"Error: can't read file!\n{ex.Message}";
+                        }
                     }));
             }
         }
@@ -212,10 +248,24 @@ namespace EvrotorgTestApplication.ViewModels
                     (saveDataToFile = new RelayCommand(
                     async obj =>
                     {
-                        using (var writer = new StreamWriter(OpenedFilePath, true))
+                        using (var writer = new StreamWriter(OpenedFilePath, false))
                         {
-                            var json = JsonSerializer.Serialize(VisibleRatesCollection);
-                            await writer.WriteLineAsync(json);
+                            if (writer is null)
+                            {
+                                ErrorMessage = "Error: writer is null!";
+                                return;
+                            }
+
+                            try
+                            {
+                                var json = JsonSerializer.Serialize(VisibleRatesCollection);
+                                await writer.WriteLineAsync(json);
+                                ErrorMessage = string.Empty;
+                            }
+                            catch (Exception ex)
+                            {
+                                ErrorMessage = $"Error: can't write data to file!\n{ex.Message}";
+                            }
                         }
                     },
                     obj =>
@@ -235,14 +285,24 @@ namespace EvrotorgTestApplication.ViewModels
                     {
                         var fileSaver = new SaveFileDialog();
                         fileSaver.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-                        if (!fileSaver.ShowDialog().HasValue)
+
+                        fileSaver.ShowDialog();
+
+                        if (fileSaver.FileName == string.Empty)
                             return;
 
                         OpenedFilePath = fileSaver.FileName;
-                        using (var writer = new StreamWriter(fileSaver.FileName, true))
+
+                        try
                         {
+                            var writer = new StreamWriter(fileSaver.FileName, false);
                             var json = JsonSerializer.Serialize(VisibleRatesCollection);
                             await writer.WriteLineAsync(json);
+                            ErrorMessage = string.Empty;
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorMessage = $"Error: can't save data to new file!\n{ex.Message}";
                         }
                     },
                     obj =>
@@ -337,7 +397,11 @@ namespace EvrotorgTestApplication.ViewModels
                     obj =>
                     {
                         VisibleRatesCollection = cachedCurrencies;
-                        changedRatesCollection?.Clear();
+                        changedRatesCollection = null;
+                    },
+                    obj =>
+                    {
+                        return !(changedRatesCollection is null);
                     }));
             }
         }
@@ -349,5 +413,8 @@ namespace EvrotorgTestApplication.ViewModels
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
+
+        private string createUrl() =>
+            generalUrl + $"?ondate={FirstDateTime.ToString("yyyy-MM-dd")}&periodicity={periodicity}";
     }
 }
