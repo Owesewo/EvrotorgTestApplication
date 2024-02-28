@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>RelayCommandShortcut</Title>
+      <Shortcut>rel</Shortcut>
+    </Header>
+    <Snippet>
+      <Code Language="CSharp">
+        <![CDATA[public RelayCommand CommandName
+        {
+            get
+            {
+                return privateCommandName ??
+                    (privateCommandName = new RelayCommand(
+                    obj =>
+                    {
+                        throw new NotImplementedException();
+                    }));
+            }
+        }]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>RelayWithBoolCommandShortcut</Title>
+      <Shortcut>relbool</Shortcut>
+    </Header>
+    <Snippet>
+      <Code Language="CSharp">
+        <![CDATA[public RelayCommand CommandName
+        {
+            get
+            {
+                return privateCommandName ??
+                    (privateCommandName = new RelayCommand(
+                    obj =>
+                    {
+                        throw new NotImplementedException();
+                    },
+                    obj =>
+                    {
+                        return false;
+                    }));
+            }
+        }]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>INotifyChangedProperty</Title>
+      <Shortcut>notprop</Shortcut>
+    </Header>
+    <Snippet>
+      <Code Language="CSharp">
+        <![CDATA[public object NotifiedProp
+        {
+            get
+            {
+                return this.NotifiedProp;
+            }
+            set
+            {
+                this.NotifiedProp = value; 
+                OnPropertyChanged("NotifiedProp");
+            }
+        }
+]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>

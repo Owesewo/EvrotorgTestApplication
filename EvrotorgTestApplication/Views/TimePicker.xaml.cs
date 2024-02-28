@@ -29,12 +29,12 @@ namespace EvrotorgTestApplication
         }
 
         private string validateHours(string strHours) =>
-            Regex.IsMatch(strHours, @"(?:[01]?[0-9]|2[0-3])")
+            Regex.IsMatch(strHours, @"(?:[01][0-9]|2[0-3]|[0-9]?)")
             ? strHours
             : "00";
 
         private string validateMinutesOrSeconds(string strMinutesOrSeconds) =>
-            !Regex.IsMatch(strMinutesOrSeconds, @"(?:[0-5][0-9])")
+            Regex.IsMatch(strMinutesOrSeconds, @"(?:[0-5][0-9])")
             ? strMinutesOrSeconds
             : "00";
 
